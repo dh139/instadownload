@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Download Instagram media easily with our Instagram Media Downloader. Paste the URL and get your media quickly.">
+    <meta name="keywords" content="Instagram downloader, media downloader, Instagram media, download Instagram">
+    <meta name="author" content="Gajjjar">
+    <meta property="og:title" content="Instagram Media Downloader">
+    <meta property="og:description" content="Download Instagram media easily with our Instagram Media Downloader. Just paste the URL and get your media.">
+    <meta property="og:image" content="URL_to_an_image_that_represents_your_site">
+    <meta property="og:url" content="URL_of_your_site">
+    <meta property="og:type" content="website">
+    <title>Instagram Media Downloader</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+        }
+        form {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #34495e;
+        }
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 12px 20px;
+            background-color: #3498db;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #result {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .media-container {
+            position: relative;
+            display: inline-block;
+        }
+        #result img, #result video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .download-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 12px 20px;
+            background-color: #27ae60;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .download-link:hover {
+            background-color: #1e8449;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Instagram Media Downloader</h1>
+    <form id="downloadForm">
+        <label for="url">Instagram URL:</label>
+        <input type="text" id="url" name="url" placeholder="Paste Instagram media URL here..." required>
+        <button type="submit">Download</button>
+    </form>
+    <div id="result"></div>
+
+    <!-- Modal -->
+    <div id="videoModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <video id="modalVideo" controls>
+                Your browser does not support the video tag.
+            </video>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('downloadForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const url = document.getElementById('url').value;
+            
+            try {
+                const response = await fetch('http://localhost:3000/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url }),
+                });
+
+                const result = await response.json();
+                
+                const resultDiv = document.getElementById('result');
+                
+                if (result.success) {
+                    if (result.mediaUrl.endsWith('.mp4')) {
+                        resultDiv.innerHTML = `
+                            <div class="media-container">
+                                <video src="${result.mediaUrl}" controls></video>
+                                <button class="download-link" onclick="openModal('${result.mediaUrl}')">View Video</button>
+                                <a href="${result.mediaUrl}" class="download-link" download>Download Video</a>
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="media-container">
+                                <img src="${result.mediaUrl}" alt="Instagram media">
+                                <a href="${result.mediaUrl}" class="download-link" download>Download Image</a>
+                            </div>
+                        `;
+                    }
+                } else {
+                    resultDiv.textContent = result.message;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').textContent = 'An error occurred.';
+            }
+        });
+
+        // Modal functionality
+        const modal = document.getElementById('videoModal');
+        const video = document.getElementById('modalVideo');
+        const close = document.getElementsByClassName('close')[0];
+
+        function openModal(mediaUrl) {
+            video.src = mediaUrl;
+            modal.style.display = 'flex';
+        }
+
+        close.onclick = function() {
+            modal.style.display = 'none';
+            video.src = ''; // Stop video when closing the modal
+        }
+
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+                video.src = ''; // Stop video when closing the modal
+            }
+        }
+    </script>
+</body>
+</html>
